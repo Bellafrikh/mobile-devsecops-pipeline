@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Mobile Security Report</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Segoe UI',sans-serif;background:#0f172a;color:#e2e8f0}
+  .header{background:linear-gradient(135deg,#1e40af,#7c3aed);padding:40px;text-align:center}
+  h1{font-size:2em} .sub{opacity:.8;margin-top:8px}
+  .wrap{max-width:1300px;margin:0 auto;padding:30px}
+  .grid{display:grid;grid-template-columns:repeat(5,1fr);gap:16px;margin:30px 0}
+  .card{background:#1e293b;border-radius:12px;padding:20px;text-align:center;border:1px solid #334155}
+  .num{font-size:2.4em;font-weight:bold}
+  .crit{color:#ef4444} .hi{color:#f97316} .med{color:#eab308}
+  .lo{color:#22c55e} .inf{color:#60a5fa}
+  .riskbar{background:#1e293b;border-radius:12px;padding:20px;margin:20px 0}
+  .rbg{background:#334155;border-radius:10px;height:18px}
+  .rb{height:18px;border-radius:10px;background:linear-gradient(90deg,#22c55e,#eab308,#ef4444)}
+  table{width:100%;border-collapse:collapse;margin-top:20px;font-size:.9em}
+  th{background:#1e293b;padding:12px;text-align:left;border-bottom:2px solid #334155}
+  td{padding:10px 12px;border-bottom:1px solid #1e293b;vertical-align:top}
+  tr:hover{background:#1e293b88}
+  .badge{padding:3px 10px;border-radius:20px;font-size:.8em;font-weight:bold}
+  .critical{background:#7f1d1d;color:#fca5a5}
+  .high{background:#7c2d12;color:#fdba74}
+  .medium{background:#713f12;color:#fde047}
+  .low{background:#14532d;color:#86efac}
+  .info{background:#1e3a5f;color:#93c5fd}
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>🔐 Mobile DevSecOps — Security Report</h1>
+  <div class="sub">Généré le 2026-04-26 16:56:00 • Powered by Ollama (llama3.2)</div>
+</div>
+<div class="wrap">
+  <div class="grid">
+    <div class="card"><div class="num crit">1</div><div>Critical</div></div>
+    <div class="card"><div class="num hi">2</div><div>High</div></div>
+    <div class="card"><div class="num med">2</div><div>Medium</div></div>
+    <div class="card"><div class="num lo">0</div><div>Low</div></div>
+    <div class="card"><div class="num inf">55<span style="font-size:.5em">/100</span></div><div>Risk Score</div></div>
+  </div>
+  <div class="riskbar">
+    <h3 style="margin-bottom:12px">📊 Niveau de risque global</h3>
+    <div class="rbg"><div class="rb" style="width:55%"></div></div>
+    <div style="text-align:right;margin-top:6px;opacity:.6">55%</div>
+  </div>
+  <h2 style="margin-top:30px">🤖 Vulnérabilités triées par IA (Ollama)</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Outil</th><th>Sévérité</th><th>Règle</th>
+        <th>Fichier</th><th>Impact</th><th>Remédiation</th><th>OWASP Mobile</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td>Semgrep</td>
+          <td><span class="badge high">HIGH</span></td>
+          <td style="font-size:.85em">hardcoded-credentials</td>
+          <td style="font-family:monospace;font-size:.8em">MainActivity.java</td>
+          <td>Risque de sécurité détecté</td>
+          <td>Analyser et corriger selon les bonnes pratiques OWASP</td>
+          <td style="font-size:.85em">M1 - Improper Platform Usage</td>
+        </tr>
+        <tr>
+          <td>Semgrep</td>
+          <td><span class="badge critical">CRITICAL</span></td>
+          <td style="font-size:.85em">sql-injection</td>
+          <td style="font-family:monospace;font-size:.8em">MainActivity.java</td>
+          <td>Risque de sécurité détecté</td>
+          <td>Analyser et corriger selon les bonnes pratiques OWASP</td>
+          <td style="font-size:.85em">M1 - Improper Platform Usage</td>
+        </tr>
+        <tr>
+          <td>Semgrep</td>
+          <td><span class="badge medium">MEDIUM</span></td>
+          <td style="font-size:.85em">sensitive-log</td>
+          <td style="font-family:monospace;font-size:.8em">MainActivity.java</td>
+          <td>Risque de sécurité détecté</td>
+          <td>Analyser et corriger selon les bonnes pratiques OWASP</td>
+          <td style="font-size:.85em">M1 - Improper Platform Usage</td>
+        </tr>
+        <tr>
+          <td>MobSF</td>
+          <td><span class="badge medium">MEDIUM</span></td>
+          <td style="font-size:.85em">android_allowbackup</td>
+          <td style="font-family:monospace;font-size:.8em">AndroidManifest.xml</td>
+          <td>Risque de sécurité détecté</td>
+          <td>Analyser et corriger selon les bonnes pratiques OWASP</td>
+          <td style="font-size:.85em">M1 - Improper Platform Usage</td>
+        </tr>
+        <tr>
+          <td>MobSF</td>
+          <td><span class="badge high">HIGH</span></td>
+          <td style="font-size:.85em">android_debuggable</td>
+          <td style="font-family:monospace;font-size:.8em">AndroidManifest.xml</td>
+          <td>Risque de sécurité détecté</td>
+          <td>Analyser et corriger selon les bonnes pratiques OWASP</td>
+          <td style="font-size:.85em">M1 - Improper Platform Usage</td>
+        </tr></tbody>
+  </table>
+</div>
+</body>
+</html>
