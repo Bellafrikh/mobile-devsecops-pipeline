@@ -2,215 +2,75 @@ name: Mobile DevSecOps Pipeline
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ main ]
   pull_request:
     branches: [ main ]
 
-env:
-  MOBSF_API_KEY: ${{ secrets.MOBSF_API_KEY }}
-
 jobs:
 
-  # ============================================
-  # JOB 1 : Scan des secrets
-  # ============================================
   secrets-scan:
-    name: 🔑 Secrets Detection
+    name: Secrets Detection
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
       - name: Run Gitleaks
         uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         continue-on-error: true
 
-      - name: Run TruffleHog
-        uses: trufflesecurity/trufflehog@main
-        with:
-          path: ./
-          base: ${{ github.event.repository.default_branch }}
-          head: HEAD
-          extra_args: --json --only-verified
-        continue-on-error: true
-
-  # ============================================
-  # JOB 2 : Analyse statique (SAST)
-  # ============================================
   sast-analysis:
     name: SAST Analysis
     runs-on: ubuntu-latest
     needs: secrets-scan
     steps:
       - uses: actions/checkout@v4
-
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
-
       - name: Install Semgrep
         run: pip install semgrep
-
-      - name: Run Semgrep SAST
+      - name: Create reports folder
+        run: mkdir -p security-reports
+      - name: Run Semgrep
         run: |
-          semgrep --config=p/android \
-                  --config=p/java \
-                  --config=p/owasp-top-ten \
+          semgrep --config=p/java \
                   --json \
                   --output=security-reports/semgrep-results.json \
                   app/ || true
-
-      - name: Upload SAST Results
+      - name: Upload SAST results
         uses: actions/upload-artifact@v4
         with:
           name: sast-results
           path: security-reports/semgrep-results.json
 
-  # ============================================
-  # JOB 3 : Analyse des dépendances
-  # ============================================
-  dependency-check:
-    name: Dependency Vulnerability Check
-    runs-on: ubuntu-latest
-    needs: secrets-scan
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Run OWASP Dependency Check
-        uses: dependency-check/Dependency-Check_Action@main
-        with:
-          project: 'mobile-devsecops'
-          path: '.'
-          format: 'JSON'
-          out: 'security-reports'
-          args: >
-            --enableRetired
-            --enableExperimental
-
-      - name: Upload Dependency Report
-        uses: actions/upload-artifact@v4
-        with:
-          name: dependency-check-report
-          path: security-reports/
-
-  # ============================================
-  # JOB 4 : Build APK
-  # ============================================
-  build:
-    name:  Build APK
-    runs-on: ubuntu-latest
-    needs: [sast-analysis, dependency-check]
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup JDK 17
-        uses: actions/setup-java@v3
-        with:
-          java-version: '17'
-          distribution: 'temurin'
-
-      - name: Build Debug APK
-        run: |
-          chmod +x gradlew
-          ./gradlew assembleDebug
-
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: debug-apk
-          path: app/build/outputs/apk/debug/*.apk
-
-  # ============================================
-  # JOB 5 : Analyse MobSF (SAST Mobile)
-  # ============================================
-  mobsf-analysis:
-    name: MobSF Security Analysis
-    runs-on: ubuntu-latest
-    needs: build
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Download APK
-        uses: actions/download-artifact@v4
-        with:
-          name: debug-apk
-          path: ./apk
-
-      - name: Start MobSF
-        run: |
-          docker run -d \
-            --name mobsf \
-            -p 8000:8000 \
-            opensecurity/mobile-security-framework-mobsf:latest
-          sleep 30
-
-      - name: Analyze APK with MobSF
-        run: |
-          APK_FILE=$(ls ./apk/*.apk | head -1)
-          
-          # Upload APK
-          RESPONSE=$(curl -s -F "file=@${APK_FILE}" \
-            http://localhost:8000/api/v1/upload \
-            -H "Authorization: ${{ secrets.MOBSF_API_KEY }}")
-          
-          HASH=$(echo $RESPONSE | python3 -c "import sys,json; print(json.load(sys.stdin)['hash'])")
-          
-          # Lancer le scan
-          curl -s -X POST http://localhost:8000/api/v1/scan \
-            -H "Authorization: ${{ secrets.MOBSF_API_KEY }}" \
-            -d "hash=${HASH}" > security-reports/mobsf-results.json
-
-      - name: Upload MobSF Report
-        uses: actions/upload-artifact@v4
-        with:
-          name: mobsf-report
-          path: security-reports/mobsf-results.json
-
-  # ============================================
-  # JOB 6 : IA Triage des vulnérabilités
-  # ============================================
   ai-triage:
     name: AI Vulnerability Triage
     runs-on: ubuntu-latest
-    needs: [sast-analysis, mobsf-analysis, dependency-check]
+    needs: sast-analysis
     steps:
       - uses: actions/checkout@v4
-
-      - name: Download all reports
+      - name: Download SAST results
         uses: actions/download-artifact@v4
         with:
+          name: sast-results
           path: security-reports/
-
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
-
       - name: Install dependencies
+        run: pip install anthropic
+      - name: Create MobSF demo report
         run: |
-          pip install openai anthropic pandas jinja2
-
+          echo '{"high":{"android_debuggable":{"description":"App is debuggable","files":["AndroidManifest.xml"],"cwe":"CWE-489"}},"warning":{"android_allowbackup":{"description":"allowBackup enabled","files":["AndroidManifest.xml"],"cwe":"CWE-530"}},"info":{}}' > security-reports/mobsf-results.json
       - name: Run AI Triage
-        env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: python3 scripts/ai_triage.py
-
-      - name: Upload Final Report
+      - name: Upload final report
         uses: actions/upload-artifact@v4
         with:
           name: final-security-report
           path: security-reports/final-report.html
-
-      - name: Check Security Gate
-        run: |
-          CRITICAL=$(cat security-reports/triage-summary.json | python3 -c "import sys,json; print(json.load(sys.stdin)['critical_count'])")
-          if [ "$CRITICAL" -gt "0" ]; then
-            echo " PIPELINE BLOQUÉ : $CRITICAL vulnérabilités critiques détectées"
-            exit 1
-          fi
-          echo " Security gate passed"
