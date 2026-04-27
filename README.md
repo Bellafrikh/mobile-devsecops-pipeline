@@ -36,7 +36,7 @@ Une application Android a été conçue délibérément avec plusieurs failles p
 * **CWE-89** : Injection SQL par concaténation de chaînes.
 * **CWE-798** : Identifiants (clés API) codés en dur dans le code source .
 * **CWE-532** : Données sensibles exposées via `Log.d()`.
-* **CWE-489** : Application déboguable en production (`debuggable="true"`)[cite: 158].
+* **CWE-489** : Application déboguable en production (`debuggable="true"`).
 * **CWE-79** : JavaScript activé sans restriction dans WebView.
 
 ---
